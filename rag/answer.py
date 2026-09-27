@@ -1,7 +1,12 @@
 import os
+from anyio import Path
 from groq import Groq
 from embeddings.embed import Embedder
+from dotenv import load_dotenv
 from db.setup import search_chunks
+
+
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
