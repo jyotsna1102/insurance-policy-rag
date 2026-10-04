@@ -1,9 +1,10 @@
 import os
-from anyio import Path
+from pathlib import Path
 from groq import Groq
 from embeddings.embed import Embedder
 from dotenv import load_dotenv
 from db.setup import search_chunks
+from claim.schemas import Claim
 
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
@@ -20,6 +21,32 @@ Policy context:
 {context}
 
 User question: {query}"""
+
+    response = client.chat.completions.create(
+        model="openai/gpt-oss-120b",
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+    )
+    return response.choices[0].message.content
+
+
+def generate_claim_answer(claim: Claim, context: str) -> str:
+    prompt = f"""Assess the following medical claim using ONLY the policy context provided.
+Determine how much of the claim is payable under the policy.
+Explain the covered and non-covered amounts when the policy provides enough information.
+Use the net payable claim amount from the claim data, not the gross bill amount.
+If the policy context does not contain enough information, say so clearly.
+Always mention the relevant policy section and page number when available.
+
+Claim JSON:
+{claim.model_dump_json(indent=2)}
+
+Policy context:
+{context}"""
 
     response = client.chat.completions.create(
         model="openai/gpt-oss-120b",

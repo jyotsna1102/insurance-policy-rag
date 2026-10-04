@@ -6,6 +6,7 @@ DB_CONFIG = {
     "dbname": "insurance_rag",
     "user": "postgres",
     "password": "postgres",
+    "connect_timeout": 10,
 }
 
 
@@ -70,26 +71,33 @@ def search_chunks(
     query_embedding: list[float],
     limit: int = 5,
 ):
-    with psycopg.connect(**DB_CONFIG) as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT
-                    id,
-                    chunk_text,
-                    title,
-                    path,
-                    page_start,
-                    page_end,
-                    embedding <=> %s::vector AS distance
-                FROM policy_chunks
-                ORDER BY embedding <=> %s::vector
-                LIMIT %s
-                """,
-                (query_embedding, query_embedding, limit),
-            )
+    try:
+        with psycopg.connect(**DB_CONFIG) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                        id,
+                        chunk_text,
+                        title,
+                        path,
+                        page_start,
+                        page_end,
+                        embedding <=> %s::vector AS distance
+                    FROM policy_chunks
+                    ORDER BY embedding <=> %s::vector
+                    LIMIT %s
+                    """,
+                    (query_embedding, query_embedding, limit),
+                )
 
-            return cur.fetchall()
+                return cur.fetchall()
+    except psycopg.OperationalError as error:
+        raise RuntimeError(
+            "Could not connect to PostgreSQL at localhost:5432 within "
+            f"{DB_CONFIG['connect_timeout']} seconds. "
+            "Start the database with 'docker compose up -d postgres'."
+        ) from error
 
 
 if __name__ == "__main__":

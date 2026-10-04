@@ -12,7 +12,7 @@ DATA_PATH = (
 )
 
 
-def test_final_extraction():
+def extract_claim() -> Claim:
     hospital_bill = extract_document(
         pdf_path=DATA_PATH / "Medical_Bill_2.pdf",
         schema=HospitalBill,
@@ -21,10 +21,14 @@ def test_final_extraction():
         pdf_path=DATA_PATH / "Discharge_Summary_2.pdf",
         schema=DischargeSummary,
     )
-    claim = Claim(
+    return Claim(
         discharge_summary=discharge_summary,
         hospital_bill=hospital_bill,
     )
+
+
+def test_final_extraction():
+    claim = extract_claim()
 
     print("\n===== EXTRACTED CLAIM =====\n")
 
@@ -34,4 +38,5 @@ def test_final_extraction():
 
     print(claim.model_dump_json(indent=2))
 
-test_final_extraction()
+if __name__ == "__main__":
+    test_final_extraction()

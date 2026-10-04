@@ -1,12 +1,19 @@
-from rag.answer import retrieve_context, generate_answer
+from rag.answer import generate_claim_answer, retrieve_context
+from tests.test_extraction import extract_claim
 
 
-
-query = "What is the maternity benefit limit?"
+claim = extract_claim()
+query = " ".join(
+	[
+		diagnosis.name
+		for diagnosis in claim.discharge_summary.diagnoses
+	]
+	+ claim.discharge_summary.procedures
+)
 
 context = retrieve_context(query)
 
-answer = generate_answer(query, context)
+answer = generate_claim_answer(claim, context)
 
 print("\nANSWER:")
 print(answer)
